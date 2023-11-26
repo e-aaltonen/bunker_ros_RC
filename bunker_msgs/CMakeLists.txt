@@ -1,4 +1,6 @@
-
+# * Modifications by E. Aaltonen 2023
+# * for publishing RC status messages
+# * changes indicated: // EA
 
 cmake_minimum_required(VERSION 2.8.3)
 project(bunker_msgs)
@@ -49,7 +51,9 @@ add_message_files(
     FILES
     BunkerStatus.msg
     BunkerMotorState.msg
-
+    BunkerLightState.msg
+    BunkerLightCmd.msg
+    BunkerRCState.msg   #// EA
 )
 
 

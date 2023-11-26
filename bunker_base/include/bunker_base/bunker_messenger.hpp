@@ -7,18 +7,25 @@
  * Copyright (c) 2019 Ruixiang Du (rdu)
  */
 
+/* Modifications by E. Aaltonen 2023
+* for publishing RC status messages
+* changes indicated: // EA
+*/
+
 #ifndef BUNKER_MESSENGER_HPP
 #define BUNKER_MESSENGER_HPP
 
 #include <string>
+
+#include <sensor_msgs/LaserScan.h>
 
 #include <ros/ros.h>
 #include <nav_msgs/Odometry.h>
 // #include <tf/transform_broadcaster.h>
 #include <tf2_ros/transform_broadcaster.h>
 
-#include "ugv_sdk/mobile_robot/bunker_robot.hpp"
-#include <mutex>
+#include "bunker_msgs/BunkerLightCmd.h"
+#include "ugv_sdk/bunker/bunker_base.hpp"
 
 namespace westonrobot
 {
@@ -26,15 +33,15 @@ class BunkerROSMessenger
 {
 public:
     explicit BunkerROSMessenger(ros::NodeHandle *nh);
-    BunkerROSMessenger(BunkerRobot *bunker, ros::NodeHandle *nh);
+    BunkerROSMessenger(BunkerBase *bunker, ros::NodeHandle *nh);
 
     std::string odom_frame_;
     std::string base_frame_;
     std::string odom_topic_name_;
-    bool pub_tf_;
 
     bool simulated_robot_ = false;
     int sim_control_rate_ = 50;
+    bool use_scan_ = true;
 
     void SetupSubscription();
 
@@ -44,15 +51,18 @@ public:
     void GetCurrentMotionCmdForSim(double &linear, double &angular);
 
 private:
-    BunkerRobot *bunker_;
+    BunkerBase *bunker_;
     ros::NodeHandle *nh_;
-    
+
     std::mutex twist_mutex_;
     geometry_msgs::Twist current_twist_;
 
     ros::Publisher odom_publisher_;
     ros::Publisher status_publisher_;
+    ros::Publisher rc_publisher_;       // EA
     ros::Subscriber motion_cmd_subscriber_;
+    ros::Subscriber light_cmd_subscriber_;
+    ros::Subscriber scan_subscriber_;
     tf2_ros::TransformBroadcaster tf_broadcaster_;
 
     // speed variables
@@ -66,6 +76,8 @@ private:
     ros::Time current_time_;
 
     void TwistCmdCallback(const geometry_msgs::Twist::ConstPtr &msg);
+    void ScanCallback(const sensor_msgs::LaserScan::ConstPtr &msg);
+    void LightCmdCallback(const bunker_msgs::BunkerLightCmd::ConstPtr &msg);
     void PublishOdometryToROS(double linear, double angular, double dt);
 };
 } // namespace westonrobot
