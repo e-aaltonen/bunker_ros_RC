@@ -1,110 +1,66 @@
-# ROS Packages for Bunker Mobile Robot
+# RC state publisher mod for Bunker ROS packages
+by E. Aaltonen March 2023
 
-## Packages
+This project includes additions and modifications necessary to publish RC data in Agilex Bunker (https://github.com/agilexrobotics/bunker_ros (license: BSD) - branch: v1.x). 
 
-This repository contains minimal packages to control the bunker robot using ROS.
+## New files:
 
-* bunker_bringup: launch and configuration files to start ROS nodes
-* bunker_base: a ROS wrapper around [ugv_sdk](https://github.com/agilexrobotics/ugv_sdk) to monitor and control the bunker robot
-* bunker_msgs: bunker related message definitions
+* bunker_msgs/msg/BunkerRCState.msg
 
-## Supported Hardware
+## Modified files:
 
-* bunker
-* bunker_mini
-* bunker pro
+* bunker_msgs/CMakeList.txt
+* bunker_base/include/bunker_base/bunker_messenger.hpp
+* bunker_base/src/bunker_messenger.cpp
 
-### Update the packages for your customized robot
-
-**Additional sensors**
-
-It's likely that you may want to add additional sensors to the bunker mobile platform, such as a Lidar for navigation. In such cases, a new ".xacro" file needs to be created to describe the relative pose of the new sensor with respect to the robot base, so that the sensor frame can be reflected in the robot tf tree.
-
-A [sample](bunker_description/sample/bunker_v2_nav.xacro) ".xacro" file is present in this repository, in which the base ".xacro" file of an empty bunker platform is first included, and then additional links are defined.
-
-The nodes in this ROS package are made to handle only the control of the bunker base and publishing of the status. Additional nodes may need to be created by the user to handle the sensors.
-
-**Alternative odometry calculation**
-
-By default the bunker_base package will publish odometry message to topic "/odom". In case you want to use a different approach to calculate the odometry, for example estimating the position together with an IMU, you could rename the default odometry topic to be something else.
+RC data is published in topic /bunker_rc_state:
 
 ```
-$ bunker_bringup bunker_minimal.launch odom_topic_name:="<custom_name>"
+uint8 sws
+int8 var_a
+int8_t right_stick_left_right 
+int8_t right_stick_up_down
+int8_t left_stick_left_right
+int8_t left_stick_up_down
+
 ```
 
-## Communication interface setup
+## Changes:
+```
+~/catkin_ws/src/base_ros/bunker_base/bunker_msgs/CMakeLists.txt:
+53a54
+>     BunkerRCState.msg   #//.
 
-Please refer to the [README](https://github.com/agilexrobotics/ugv_sdk_sdk#hardware-interface) of "ugv_sdk" package for setup of communication interfaces.
+--
+~/catkin_ws/src/base_ros/bunker_base/bunker_msgs/msg/BunkerRCState.msg:
+uint8 sws
+uint8 var_a
 
-#### Note on CAN interface on Nvidia Jetson Platforms
+--
 
-Nvidia Jeston TX2/Xavier/XavierNX have CAN controller(s) integrated in the main SOC. If you're using a dev kit, you need to add a CAN transceiver for proper CAN communication. 
+~/catkin_ws/src/base_ros/bunker_base/bunker_base/src/bunker_messanger.cpp
+14a15
+> #include "bunker_msgs/BunkerRCState.h"  //.
+31a33,34
+>     rc_publisher_ =
+>         nh_->advertise<bunker_msgs::BunkerRCState>("/bunker_rc_status", 10); //.
+207a211,218
+>     // publish Bunker RC state message  //.
+>     bunker_msgs::BunkerRCState rc_msg;
+> 
+>     rc_msg.sws = state.rc_state.sws;
+>     rc_msg.var_a = state.rc_state.var_a;
+>        
+>     rc_publisher_.publish(rc_msg);
+>         
 
-## Basic usage of the ROS packages
+--
 
-1. Install dependent libraries
-
-    ```
-    $ sudo apt install -y ros-$ROS_DISTRO-teleop-twist-keyboard
-    ```
-
-2. Clone the packages into your catkin workspace and compile
-
-    (the following instructions assume your catkin workspace is at: ~/catkin_ws/src)
-
-    ```
-    $ cd ~/catkin_ws/src
-    $ git clone  https://github.com/agilexrobotics/ugv_sdk.git
-    $ git clone https://github.com/agilexrobotics/bunker_ros.git
-    $ cd ..
-    $ catkin_make
-    ```
-
-3. Setup CAN-To-USB adapter
-
-* Enable gs_usb kernel module(If you have already added this module, you do not need to add it)
-    ```
-    $ sudo modprobe gs_usb
-    ```
-    
-* first time use bunker-ros package
-   ```
-   $ rosrun bunker_bringup setup_can2usb.bash
-   ```
-   
-* if not the first time use bunker-ros package(Run this command every time you turn off the power) 
-   ```
-   $ rosrun bunker_bringup bringup_can2usb.bash
-   ```
-   
-* Testing command
-    ```
-    # receiving data from can0
-    $ candump can0
-    ```
-
-4. Launch ROS nodes
-
-* Start the base node for the real robot
-
-    ```
-    $ roslaunch bunker_bringup bunker_robot_base.launch
-    ```
-
-    The [bunker_bringup/bunker_robot_base.launch](bunker_bringup/launch/bunker_robot_base.launch) has 4 parameters:
-
-    - port_name: specifies the port used to communicate with the robot, default = "can0"
-
-    - odom_topic_name: sets the name of the topic which calculated odometry is published to, defaults = "odom"
+~/catkin_ws/src/base_ros/bunker_base/bunker_base/include/bunker_base/bunker_messenger.hpp:
 
 
+56a57
+>     ros::Publisher rc_publisher_;       //.
 
-* Start the keyboard tele-op node
-
-    ```
-    $ roslaunch bunker_bringup bunker_teleop_keyboard.launch
-    ```
-
-    **SAFETY PRECAUSION**: 
-
-    The default command values of the keyboard teleop node are high, make sure you decrease the speed commands before starting to control the robot with your keyboard! Have your remote controller ready to take over the control whenever necessary. 
+--
+```
