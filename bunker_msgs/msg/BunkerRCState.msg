@@ -1,7 +1,10 @@
-uint8 sws
+uint8 swa
+uint8 swb
+uint8 swc
+uint8 swd
+int8 stick_right_v
+int8 stick_right_h
+int8 stick_left_v
+int8 stick_left_h
 int8 var_a
-int8_t right_stick_left_right 
-int8_t right_stick_up_down
-int8_t left_stick_left_right
-int8_t left_stick_up_down
 

@@ -1,4 +1,4 @@
-## Modifications by E. Aaltonen 2024 // EA
+
 
 cmake_minimum_required(VERSION 2.8.3)
 project(bunker_msgs)
@@ -49,7 +49,7 @@ add_message_files(
     FILES
     BunkerStatus.msg
     BunkerMotorState.msg
-    BunkerRCState.msg   #// EA
+
 )
 
 
@@ -199,4 +199,3 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
-

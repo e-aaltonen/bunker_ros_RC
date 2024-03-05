@@ -6,7 +6,6 @@
  *
  * Copyright (c) 2019 Ruixiang Du (rdu)
  */
- // Modifications by EA Mar 5, 2024: added RC state publisher (rc_publisher_)
 
 #include "bunker_base/bunker_messenger.hpp"
 
@@ -14,7 +13,7 @@
 
 #include "bunker_msgs/BunkerStatus.h"
 //#include "bunker_msgs/BunkerLightCmd.h"
-#include "bunker_msgs/BunkerRCState.h" // EA
+
 
 namespace westonrobot
 {
@@ -29,8 +28,7 @@ namespace westonrobot
     // odometry publisher
     odom_publisher_ = nh_->advertise<nav_msgs::Odometry>(odom_topic_name_, 50);
     status_publisher_ = nh_->advertise<bunker_msgs::BunkerStatus>("/bunker_status", 10);
-    rc_publisher_ = nh_->advertise<bunker_msgs::BunkerRCState>("/bunker_rc_status", 10);   // EA
-    
+
     // cmd subscriber
     motion_cmd_subscriber_ = nh_->subscribe<geometry_msgs::Twist>(
         "/cmd_vel", 5, &BunkerROSMessenger::TwistCmdCallback, this);
@@ -111,22 +109,6 @@ namespace westonrobot
 
     }
     status_publisher_.publish(status_msg);
-    
-    // publish Bunker RC state message // EA ->
-    bunker_msgs::BunkerRCState rc_msg;
-    
-    rc_msg.swa = robot_state.rc_state.swa;
-    rc_msg.swb = robot_state.rc_state.swb;
-    rc_msg.swc = robot_state.rc_state.swc;
-    rc_msg.swd = robot_state.rc_state.swd;
-    rc_msg.stick_right_v = robot_state.rc_state.stick_right_v;
-    rc_msg.stick_right_h = robot_state.rc_state.stick_right_h;
-    rc_msg.stick_left_v = robot_state.rc_state.stick_left_v;
-    rc_msg.stick_left_h = robot_state.rc_state.stick_left_h;
-    rc_msg.var_a = robot_state.rc_state.var_a;
-    
-    rc_publisher_.publish(rc_msg); // -> EA
-    
 
     // publish odometry and tf
     PublishOdometryToROS(robot_state.motion_state.linear_velocity, robot_state.motion_state.angular_velocity, dt);
@@ -215,4 +197,3 @@ namespace westonrobot
     odom_publisher_.publish(odom_msg);
   }
 } // namespace westonrobot
-
